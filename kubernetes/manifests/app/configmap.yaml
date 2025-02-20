@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: app-namespace
+  labels:
+    app: sample-app
+    environment: dev
+data:
+  API_URL: "https://api.example.com"
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "development"
+  FEATURE_FLAGS: |
+    {
+      "enable_new_ui": true,
+      "enable_analytics": true,
+      "maintenance_mode": false
+    }
