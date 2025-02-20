@@ -29,7 +29,7 @@ spec:
       serviceAccountName: app-service-account
       containers:
       - name: app
-        image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/devops-portfolio-app:latest
+        image: 123456789012.dkr.ecr.us-east-1.amazonaws.com/devops-automation-suite-app:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

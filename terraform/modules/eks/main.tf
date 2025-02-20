@@ -37,7 +37,7 @@ variable "environment" {
 variable "project" {
   description = "Project name for resource tagging"
   type        = string
-  default     = "devops-portfolio"
+  default     = "devops-automation-suite"
 }
 
 variable "node_instance_types" {

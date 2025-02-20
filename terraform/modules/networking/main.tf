@@ -18,7 +18,7 @@ variable "availability_zones" {
 variable "project" {
   description = "Project name for resource tagging"
   type        = string
-  default     = "devops-portfolio"
+  default     = "devops-automation-suite"
 }
 
 locals {

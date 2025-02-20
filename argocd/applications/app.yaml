@@ -9,7 +9,7 @@ spec:
   project: devops-automation-suite
   
   source:
-    repoURL: https://github.com/yourusername/devops-automation-suite.git
+    repoURL: https://github.com/GooeyTuxedo/devops-automation-suite.git
     targetRevision: HEAD
     path: kubernetes/manifests
   

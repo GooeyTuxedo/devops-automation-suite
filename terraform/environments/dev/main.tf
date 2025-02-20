@@ -4,7 +4,7 @@ provider "aws" {
   default_tags {
     tags = {
       Environment = "dev"
-      Project     = "devops-portfolio"
+      Project     = "devops-automation-suite"
       ManagedBy   = "terraform"
     }
   }
@@ -23,11 +23,11 @@ terraform {
   }
   
   backend "s3" {
-    bucket         = "devops-portfolio-terraform-state"
+    bucket         = "devops-automation-suite-terraform-state"
     key            = "dev/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
-    dynamodb_table = "devops-portfolio-terraform-locks"
+    dynamodb_table = "devops-automation-suite-terraform-locks"
   }
 }
 
@@ -41,7 +41,7 @@ variable "environment" {
 variable "project" {
   description = "Project name"
   type        = string
-  default     = "devops-portfolio"
+  default     = "devops-automation-suite"
 }
 
 variable "vpc_cidr" {
