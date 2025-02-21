@@ -1,229 +1,275 @@
 # DevOps Automation Suite
 
-A comprehensive portfolio project demonstrating DevOps best practices including Infrastructure as Code, CI/CD pipelines, and GitOps workflows.
+A production-grade infrastructure automation project demonstrating modern DevOps practices, including Infrastructure as Code, Kubernetes orchestration, and GitOps deployment patterns.
 
-![DevOps Workflow](./docs/project-architecture.md)
+## Project Overview
 
-## Features
+This project implements a complete cloud-native infrastructure stack with:
 
-- **Infrastructure as Code** with Terraform
-  - AWS cloud resources provisioning
-  - Modularized infrastructure components
-  - State management with remote backend
+- **Infrastructure as Code (IaC)**: Terraform modules for AWS resource provisioning
+- **Container Orchestration**: EKS cluster with automated scaling and deployment
+- **GitOps Workflow**: ArgoCD for declarative Kubernetes management
+- **CI/CD Pipeline**: Automated testing, building, and deployment
+- **Monitoring Stack**: Prometheus and Grafana for observability
 
-- **Containerized Applications**
-  - Kubernetes deployments 
-  - Resource management
-  - Horizontal Pod Autoscaling
+### Architecture Overview
 
-- **GitOps Workflow**
-  - ArgoCD for declarative deployments
-  - Git as the single source of truth
-  - Automated syncing and drift detection
+```mermaid
+flowchart LR
+    subgraph GitHub
+        repo[Git Repository]
+        actions[GitHub Actions]
+    end
 
-- **CI/CD Pipeline**
-  - GitHub Actions for CI/CD
-  - Automated testing and deployment
-  - Infrastructure validation
+    subgraph AWS Cloud
+        subgraph VPC Network
+            subgraph Public Tier
+                alb[Application Load Balancer]
+            end
+            
+            subgraph Private Tier
+                eks[EKS Cluster]
+                nodes[Worker Nodes]
+            end
+        end
+        
+        ecr[Container Registry]
+        s3[State Storage]
+    end
 
-- **Monitoring & Observability**
-  - Prometheus for metrics collection
-  - Grafana for visualization
-  - Alerting configuration
-
-## Project Structure
-
+    repo --> actions
+    actions --> ecr
+    actions --> eks
+    alb --> eks
+    eks --> nodes
 ```
-devops-automation-suite/
-├── .github/                 # CI/CD pipeline configurations
-│   └── workflows/           # GitHub Actions workflows
-├── terraform/               # Infrastructure as Code
-│   ├── modules/             # Reusable Terraform modules
-│   └── environments/        # Environment-specific configurations
-├── kubernetes/              # Kubernetes manifests
-│   ├── manifests/           # Application manifests
-│   └── helm-charts/         # Helm charts for third-party tools
-├── argocd/                  # ArgoCD configurations
-│   ├── applications/        # Application definitions
-│   └── projects/            # Project configurations
-└── docs/                    # Documentation
+
+## Infrastructure Design
+
+### Key Design Decisions
+
+1. **Network Architecture**
+   - VPC with public/private subnets for security isolation
+   - NAT Gateways for outbound private subnet connectivity
+   - Security groups following principle of least privilege
+
+2. **Kubernetes Architecture**
+   - EKS for managed control plane
+   - Auto-scaling node groups for cost optimization
+   - Private endpoint access for enhanced security
+
+3. **Deployment Strategy**
+   - GitOps workflow with ArgoCD
+   - Blue/green deployments for zero-downtime updates
+   - Automated rollbacks on failure detection
+
+### Security Considerations
+
+- **Network Security**
+  - Private subnets for workload isolation
+  - Security group rules limited to required ports
+  - VPC endpoints for AWS service access
+
+- **Access Control**
+  - IAM roles following least privilege
+  - RBAC for Kubernetes resource access
+  - Service account token authentication
+
+- **Data Protection**
+  - Encryption at rest for all storage
+  - TLS termination at load balancer
+  - Secrets management through K8s secrets
+
+## Component Details
+
+### Terraform Infrastructure
+
+The infrastructure is modularized for reusability and maintainability:
+
+```hcl
+module "networking" {
+  source = "./modules/networking"
+  # VPC, subnets, and security configuration
+}
+
+module "eks" {
+  source = "./modules/eks"
+  # Kubernetes cluster and node configuration
+}
 ```
+
+Key features:
+- Modular design for component reuse
+- State management with S3 backend
+- Automated drift detection
+
+### Kubernetes Deployment
+
+Application deployments use industry best practices:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+  template:
+    spec:
+      containers:
+      - name: app
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+```
+
+Features:
+- Resource quotas for predictable scaling
+- Health checks for reliability
+- Auto-scaling based on metrics
+- Zero-downtime deployments
+
+### CI/CD Pipeline
+
+The automated pipeline ensures reliable deployments:
+
+1. **Build Stage**
+   - Code validation
+   - Security scanning
+   - Container image building
+
+2. **Test Stage**
+   - Infrastructure validation
+   - Unit/Integration testing
+   - Compliance checking
+
+3. **Deploy Stage**
+   - Infrastructure updates
+   - Application deployment
+   - Health verification
+
+## Performance Considerations
+
+### Scaling Strategy
+
+The infrastructure automatically scales based on:
+- CPU utilization (target: 70%)
+- Memory usage (target: 80%)
+- Request latency (target: <500ms)
+
+### Cost Optimization
+
+Cost management features:
+- Spot instances for non-critical workloads
+- Auto-scaling for efficient resource use
+- Multi-AZ deployment for reliability
+
+### Monitoring and Alerting
+
+Observability stack provides:
+- Real-time metrics collection
+- Custom dashboards for visualization
+- Automated alerting for incidents
 
 ## Getting Started
 
 ### Prerequisites
 
-- AWS Account
-- GitHub Account
-- kubectl
-- Terraform
-- AWS CLI
-- ArgoCD CLI (optional)
+- AWS Account with administrator access
+- GitHub account with repository access
+- Terraform >= 1.5.7
+- kubectl >= 1.27
+- AWS CLI v2
 
-### Setup Instructions
+### Quick Start
 
-1. **Clone the repository**
+1. **Clone and Configure**
    ```bash
-   git clone https://github.com/GooeyTuxedo/devops-automation-suite.git
+   # Clone repository
+   git clone https://github.com/yourusername/devops-automation-suite.git
    cd devops-automation-suite
-   ```
 
-2. **Set up AWS credentials**
-   ```bash
+   # Configure AWS credentials
    aws configure
    ```
 
-3. **Create Terraform backend resources**
+2. **Deploy Infrastructure**
    ```bash
-   # Create S3 bucket for state
-   aws s3 mb s3://devops-automation-suite-terraform-state
-
-   # Enable versioning
-   aws s3api put-bucket-versioning \
-     --bucket devops-automation-suite-terraform-state \
-     --versioning-configuration Status=Enabled
-
-   # Create DynamoDB table for locking
-   aws dynamodb create-table \
-     --table-name devops-automation-suite-terraform-locks \
-     --attribute-definitions AttributeName=LockID,AttributeType=S \
-     --key-schema AttributeName=LockID,KeyType=HASH \
-     --billing-mode PAY_PER_REQUEST
-   ```
-
-4. **Deploy infrastructure**
-   ```bash
+   # Initialize Terraform
    cd terraform/environments/dev
    terraform init
+
+   # Review and apply changes
    terraform plan
    terraform apply
    ```
 
-5. **Configure kubectl**
+3. **Access Cluster**
    ```bash
-   aws eks update-kubeconfig --region us-east-1 --name devops-automation-suite-dev-cluster
+   # Update kubeconfig
+   aws eks update-kubeconfig --name devops-portfolio-dev-cluster
+
+   # Verify access
+   kubectl get nodes
    ```
 
-6. **Install ArgoCD**
+### Common Operations
+
+#### Deploying Updates
+```bash
+# Update application version
+git commit -am "Update application to v1.2.3"
+git push origin main
+
+# ArgoCD will automatically sync changes
+```
+
+#### Scaling Resources
+```bash
+# Scale worker nodes
+terraform apply -var 'node_desired_capacity=4'
+
+# Scale application replicas
+kubectl scale deployment/app-deployment --replicas=4
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **EKS Connection Issues**
    ```bash
-   kubectl create namespace argocd
-   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   # Verify AWS credentials
+   aws sts get-caller-identity
+
+   # Check VPC endpoints
+   aws ec2 describe-vpc-endpoints
    ```
 
-7. **Deploy ArgoCD configurations**
+2. **Deployment Failures**
    ```bash
-   kubectl apply -f argocd/projects/devops-automation-suite.yaml
-   kubectl apply -f argocd/applications/
+   # Check pod status
+   kubectl get pods -n app-namespace
+
+   # View pod logs
+   kubectl logs deployment/app-deployment
    ```
 
-## Infrastructure Components
+## Contributing
 
-### AWS Resources
+Contributions welcome! Please follow our workflow:
 
-- **VPC and Networking**
-  - Public and private subnets
-  - NAT Gateways
-  - Security Groups
-
-- **EKS Cluster**
-  - Managed Kubernetes control plane
-  - Auto-scaling node groups
-  - IAM integration
-
-- **S3 Buckets**
-  - Application assets
-  - Terraform state
-
-### Kubernetes Resources
-
-- **Application Deployment**
-  - Deployments and Services
-  - Ingress controllers
-  - Horizontal Pod Autoscaler
-
-- **Monitoring Stack**
-  - Prometheus for metrics
-  - Grafana for dashboards
-  - Alertmanager for alerts
-
-## CI/CD Pipeline
-
-The CI/CD pipeline uses GitHub Actions and consists of the following stages:
-
-1. **Validate Infrastructure**
-   - Terraform format check
-   - Terraform validation
-
-2. **Build Application**
-   - Build Docker images
-   - Push to ECR
-
-3. **Deploy Infrastructure**
-   - Apply Terraform changes
-   - Update EKS configuration
-
-4. **Deploy Application**
-   - Update Kubernetes manifests
-   - Verify deployment
-
-## GitOps with ArgoCD
-
-This project uses ArgoCD for GitOps-based deployments:
-
-- Applications defined as YAML manifests
-- Automatic synchronization
-- Drift detection and remediation
-- Application of Kubernetes resources
-
-## Monitoring and Observability
-
-The monitoring stack includes:
-
-- **Prometheus** for metrics collection
-- **Grafana** for visualization with pre-configured dashboards
-- **Alertmanager** for alert routing
-
-## Security Considerations
-
-- **Network Security**
-  - Private subnets for workloads
-  - Security groups with least privilege
-  - Network policies
-
-- **Identity and Access**
-  - IAM roles with minimal permissions
-  - RBAC for Kubernetes resources
-  - Service accounts
-
-- **Data Protection**
-  - Encrypted S3 buckets
-  - Secrets management
-  - TLS for ingress
-
-## Extending the Project
-
-Here are some ways to extend this devops automation project:
-
-1. **Multi-environment Setup**
-   - Add production environment
-   - Implement promotion workflows
-
-2. **Additional AWS Services**
-   - RDS for databases
-   - ElastiCache for caching
-   - CloudFront for CDN
-
-3. **Advanced Monitoring**
-   - Distributed tracing with Jaeger
-   - Log aggregation with ELK stack
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Create a pull request
 
 ## License
 
-MIT
-
-## Acknowledgments
-
-- AWS Documentation
-- Terraform Registry
-- Kubernetes Documentation
-- ArgoCD Documentation
+This project is licensed under the MIT License - see the LICENSE file for details.
